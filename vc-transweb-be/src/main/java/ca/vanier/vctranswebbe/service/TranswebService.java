@@ -27,12 +27,24 @@ public class TranswebService {
     }
 
     public void addCard(Card c) {
-        Map<String, Card> card = new HashMap<>();
-        DatabaseReference cardsRef = database.child("cards");
+        DatabaseReference cardsRef = database.child("cards").child(c.getCardNumber());
 
         try{
-            card.put(c.getCardNumber(), c);
-            cardsRef.setValueAsync(card);
+            cardsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    if (!snapshot.exists()) {
+                        cardsRef.setValueAsync(c);
+                    } else{
+                        Map<String, Object> card = new HashMap<>();
+                        card.put(c.getCardNumber(), c);
+                        cardsRef.updateChildrenAsync(card);
+                    }
+                }
+    
+                @Override
+                public void onCancelled(DatabaseError error) {}
+            });
         } catch(Exception ex){
             System.err.println("Error adding card to database: " + ex.getMessage());
         }
@@ -111,6 +123,28 @@ public class TranswebService {
         
         try{
             cardsRef.removeValueAsync();
+        } catch(Exception ex){
+            System.err.println("Error adding card to database: " + ex.getMessage());
+        }
+    }
+
+    public void updateCard(Card c) {
+        DatabaseReference cardsRef = database.child("cards").child(c.getCardNumber());
+
+        try{
+            cardsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    if(snapshot.exists()){
+                        Map<String, Object> card = new HashMap<>();
+                        card.put(c.getCardNumber(), c);
+                        cardsRef.updateChildrenAsync(card);
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError error) {}
+            });            
         } catch(Exception ex){
             System.err.println("Error adding card to database: " + ex.getMessage());
         }
